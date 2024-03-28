@@ -1,4 +1,4 @@
-![image](https://bearsblog.oss-cn-beijing.aliyuncs.com/img/a246fc4f1afd9d4.jpg)
+![image](/img/a246fc4f1afd9d4.jpg)
 # OrnnCache
 自由插装，动态拓展，快速构建的分布式内存数据库.
 
