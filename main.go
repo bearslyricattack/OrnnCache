@@ -1,9 +1,9 @@
 package main
 
 import (
-	"OrnnCache/cache/baseclient"
-	"OrnnCache/cache/mockclient"
-	"OrnnCache/cache/mutexclient"
+	"OrnnCache/cache/basefunction/baseclient"
+	"OrnnCache/cache/basefunction/mockclient"
+	"OrnnCache/cache/basefunction/mutexclient"
 	"context"
 )
 
