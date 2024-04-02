@@ -3,6 +3,7 @@ package baseclient
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 )
 
@@ -14,6 +15,13 @@ type BaseClient struct {
 type Item struct {
 	Object     interface{}
 	Expiration int64
+}
+
+// New 初始化方法
+func New() *BaseClient {
+	return &BaseClient{
+		items: make(map[string]Item),
+	}
 }
 
 // Set 所有方法均使用全部采用拷贝指针的方式传递对象
@@ -66,4 +74,14 @@ func (b *BaseClient) Flush(ctx context.Context) {
 // DeleteExpired 删除过期缓存，初始不做任何操作
 func (b *BaseClient) DeleteExpired(ctx context.Context) {
 	return
+}
+
+func (b *BaseClient) RandomKey() string {
+	keys := make([]string, 0, len(b.items))
+	for key := range b.items {
+		keys = append(keys, key)
+	}
+	rand.Seed(time.Now().UnixNano())
+	randomIndex := rand.Intn(len(keys))
+	return keys[randomIndex]
 }
