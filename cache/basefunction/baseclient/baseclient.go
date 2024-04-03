@@ -79,6 +79,7 @@ func (b *BaseClient) DeleteExpired(ctx context.Context) {
 func (b *BaseClient) RandomKey() string {
 	keys := make([]string, 0, len(b.items))
 	for key := range b.items {
+		fmt.Printf(key)
 		keys = append(keys, key)
 	}
 	rand.Seed(time.Now().UnixNano())
