@@ -120,8 +120,8 @@ func (i Item) TableName() string {
 func main() {
 	// 模板字符串
 
-	const base = `var base baseclient.BaseClient /n
-var {{.Name}} mutexclient.MutexClient /n
+	const base = `var base baseclient.BaseClient 
+var {{.Name}} mutexclient.MutexClient 
 mutex.BaseClient = &base`
 	// 准备模板数据
 	data := struct {
