@@ -30,6 +30,11 @@ func (c *CacheFIFO) Get(ctx context.Context, k string) (interface{}, bool) {
 	return c.BaseClient.Get(ctx, k)
 }
 
+// GetWithTTL bool标志有没有找到对象
+func (c *CacheFIFO) GetWithTTL(ctx context.Context, k string) (interface{}, bool) {
+	return c.BaseClient.GetWithTTL(ctx, k)
+}
+
 func (c *CacheFIFO) Replace(ctx context.Context, k string, x interface{}, d time.Duration) error {
 	return c.BaseClient.Replace(ctx, k, x, d)
 }

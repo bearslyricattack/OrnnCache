@@ -28,6 +28,13 @@ func (m *MockClient) Get(ctx context.Context, k string) (interface{}, bool) {
 	return nil, false
 }
 
+func (m *MockClient) GetWithTTL(ctx context.Context, k string) (interface{}, bool) {
+	if ctx.Value("test") == "1" {
+		m.BaseClient.GetWithTTL(ctx, k)
+	}
+	return nil, false
+}
+
 func (m *MockClient) Replace(ctx context.Context, k string, x interface{}, d time.Duration) error {
 	if ctx.Value("test") == "1" {
 		err := m.BaseClient.Replace(ctx, k, x, d)
@@ -64,5 +71,13 @@ func (m *MockClient) DeleteExpired(ctx context.Context) {
 		m.BaseClient.DeleteExpired(ctx)
 	} else {
 		return
+	}
+}
+
+func (m *MockClient) Keys(ctx context.Context) []string {
+	if ctx.Value("test") == "1" {
+		return m.BaseClient.Keys()
+	} else {
+		return nil
 	}
 }

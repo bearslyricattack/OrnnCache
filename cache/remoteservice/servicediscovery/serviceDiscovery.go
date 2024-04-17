@@ -10,7 +10,7 @@ type DiscoveryHandle interface {
 //		if r := recover(); r != nil {
 //			msg := fmt.Sprintf("panic: %v", r)
 //			logger.ErrLogger().WithFields(logrus.Fields{
-//				"service":   "remoteservice",
+//				"http":   "remoteservice",
 //				"func":      "getHealthHost",
 //				"backtrace": utils.GetStack(),
 //			}).Error(msg)

@@ -25,6 +25,12 @@ func (m *MutexClient) Get(ctx context.Context, k string) (interface{}, bool) {
 	return m.BaseClient.Get(ctx, k)
 }
 
+func (m *MutexClient) GetWithTTL(ctx context.Context, k string) (interface{}, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.BaseClient.GetWithTTL(ctx, k)
+}
+
 func (m *MutexClient) Replace(ctx context.Context, k string, x interface{}, d time.Duration) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -53,4 +59,10 @@ func (m *MutexClient) DeleteExpired(ctx context.Context) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.DeleteExpired(ctx)
+}
+
+func (m *MutexClient) Keys(ctx context.Context) []string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.BaseClient.Keys()
 }

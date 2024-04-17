@@ -17,6 +17,13 @@ type Item struct {
 	Expiration int64
 }
 
+func (i Item) Expired() bool {
+	if i.Expiration == 0 {
+		return false
+	}
+	return time.Now().UnixNano() > i.Expiration
+}
+
 // New 初始化方法
 func New() *BaseClient {
 	return &BaseClient{
@@ -28,7 +35,7 @@ func New() *BaseClient {
 func (b *BaseClient) Set(ctx context.Context, key string, value interface{}, d time.Duration) {
 	b.items[key] = Item{
 		Object:     value,
-		Expiration: int64(d),
+		Expiration: int64(d) + time.Now().UnixNano(),
 	}
 }
 
@@ -38,7 +45,19 @@ func (b *BaseClient) Get(ctx context.Context, k string) (interface{}, bool) {
 	if !found {
 		return nil, false
 	}
+	if item.Expired() {
+		b.Delete(ctx, k)
+		return nil, false
+	}
 	return item.Object, true
+}
+
+func (b *BaseClient) GetWithTTL(ctx context.Context, k string) (interface{}, bool) {
+	item, found := b.items[k]
+	if !found {
+		return nil, false
+	}
+	return item, true
 }
 
 // Replace 手动更新对象
@@ -85,4 +104,12 @@ func (b *BaseClient) RandomKey() string {
 	rand.Seed(time.Now().UnixNano())
 	randomIndex := rand.Intn(len(keys))
 	return keys[randomIndex]
+}
+
+func (b *BaseClient) Keys(ctx context.Context) []string {
+	keys := make([]string, 0)
+	for key := range b.items {
+		keys = append(keys, key)
+	}
+	return keys
 }
