@@ -17,3 +17,19 @@ func (r RedisMockClientImpl) Set(ctx context.Context, key string, value interfac
 func (r RedisMockClientImpl) Get(ctx context.Context, key string) *redis.StringCmd {
 	return &redis.StringCmd{}
 }
+
+func (r RedisMockClientImpl) TTL(ctx context.Context, key string) *redis.DurationCmd {
+	return &redis.DurationCmd{}
+}
+
+func (r RedisMockClientImpl) Del(ctx context.Context, keys ...string) *redis.IntCmd {
+	return &redis.IntCmd{}
+}
+
+func (r RedisMockClientImpl) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
+	return &redis.BoolCmd{}
+}
+
+func (r RedisMockClientImpl) FlushAll(ctx context.Context) *redis.StatusCmd {
+	return &redis.StatusCmd{}
+}

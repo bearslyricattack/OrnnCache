@@ -96,3 +96,10 @@ func sortByInt(inputMap map[string]int) map[string]int {
 
 	return sortedMap
 }
+
+// GetWithTTL bool标志有没有找到对象
+func (c *CacheLfu) GetWithTTL(ctx context.Context, k string) (interface{}, bool) {
+	//当前key每次被访问时，都将其值加一
+	c.keymap[k] += 1
+	return c.BaseClient.GetWithTTL(ctx, k)
+}

@@ -66,3 +66,10 @@ func (m *MockClient) DeleteExpired(ctx context.Context) {
 		return
 	}
 }
+
+func (m *MockClient) GetWithTTL(ctx context.Context, k string) (interface{}, bool) {
+	if ctx.Value("test") == "1" {
+		m.BaseClient.GetWithTTL(ctx, k)
+	}
+	return nil, false
+}

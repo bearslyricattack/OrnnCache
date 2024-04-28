@@ -54,3 +54,9 @@ func (m *MutexClient) DeleteExpired(ctx context.Context) {
 	defer m.mu.Unlock()
 	m.DeleteExpired(ctx)
 }
+
+func (m *MutexClient) GetWithTTL(ctx context.Context, k string) (interface{}, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.BaseClient.GetWithTTL(ctx, k)
+}
