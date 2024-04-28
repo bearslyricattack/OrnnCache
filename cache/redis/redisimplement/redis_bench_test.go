@@ -1,7 +1,7 @@
 package redisimplement
 
 import (
-	redistry "OrnnCache/cache/redis-try"
+	redistry "OrnnCache/cache/redis"
 	"context"
 	"fmt"
 	"math"
