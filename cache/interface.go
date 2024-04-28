@@ -14,4 +14,5 @@ type Client interface {
 	ItemCount(ctx context.Context) int
 	Flush(ctx context.Context)
 	DeleteExpired(ctx context.Context)
+	GetWithTTL(ctx context.Context, k string) (interface{}, bool)
 }

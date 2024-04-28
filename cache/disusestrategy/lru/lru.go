@@ -72,3 +72,15 @@ func (c *CacheLfu) DeleteExpired(ctx context.Context) {
 	}
 	return
 }
+
+// GetWithTTL bool标志有没有找到对象
+func (c *CacheLru) GetWithTTL(ctx context.Context, k string) (interface{}, bool) {
+	//当前key每次被访问时，都将其值移动到队列尾
+	for i, v := range c.queue {
+		if v == k {
+			c.queue = append(c.queue[:i], c.queue[i+1:]...) //删除第i位
+			c.queue = append(c.queue, v)                    //添加第i位到末尾
+		}
+	}
+	return c.BaseClient.GetWithTTL(ctx, k)
+}

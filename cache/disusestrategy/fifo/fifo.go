@@ -66,3 +66,8 @@ func (c *CacheFIFO) DeleteExpired(ctx context.Context) {
 	}
 	return
 }
+
+// GetWithTTL bool标志有没有找到对象
+func (c *CacheFIFO) GetWithTTL(ctx context.Context, k string) (interface{}, bool) {
+	return c.BaseClient.GetWithTTL(ctx, k)
+}

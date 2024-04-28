@@ -1,83 +1,99 @@
-package raft
+package main
 
 import (
+	httpd "OrnnCache/cache/raft/http"
+	"OrnnCache/cache/raft/store"
+	"bytes"
+	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
-	"time"
+	"os/signal"
 )
 
-// 定义节点数量
-var raftCount = 3
+const (
+	DefaultHTTPAddr = "localhost:11000"
+	DefaultRaftAddr = "localhost:12000"
+)
 
-// 节点池
-var nodeTable map[string]string
+var httpAddr string
+var raftAddr string
+var joinAddr string
+var nodeID string
 
-// 选举超时时间（单位：秒）
-var timeout = 3
-
-// 心跳检测超时时间
-var heartBeatTimeout = 7
-
-// 心跳检测频率（单位：秒）
-var heartBeatTimes = 3
-
-// MessageStore 用于存储消息
-var MessageStore = make(map[int]string)
+func init() {
+	flag.StringVar(&httpAddr, "haddr", DefaultHTTPAddr, "Set the HTTP bind address")
+	flag.StringVar(&raftAddr, "raddr", DefaultRaftAddr, "Set Raft bind address")
+	flag.StringVar(&joinAddr, "join", "", "Set join address, if any")
+	flag.StringVar(&nodeID, "id", "", "Node ID. If not set, same as Raft bind address")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [options] <raft-data-path> \n", os.Args[0])
+		flag.PrintDefaults()
+	}
+}
 
 func main() {
-	//定义三个节点  节点编号 - 监听端口号
-	nodeTable = map[string]string{
-		"A": ":9000",
-		"B": ":9001",
-		"C": ":9002",
-	}
-	//运行程序时候 指定节点编号
-	if len(os.Args) < 1 {
-		log.Fatal("程序参数不正确")
+	flag.Parse()
+	//在 Raft 分布式一致性协议中，每个 Raft 节点都需要持久化一些数据，包括日志条目和其他状态信息。
+	//这些数据在节点重启或者崩溃后仍然需要保留，因为它们对于保持集群的一致性至关重要。
+	//指定文件夹位置来存储这些持久化数据
+	if flag.NArg() == 0 {
+		fmt.Fprintf(os.Stderr, "No Raft storage directory specified\n")
+		os.Exit(1)
 	}
 
-	id := os.Args[1]
-	//传入节点编号，端口号，创建raft实例
-	raft := NewRaft(id, nodeTable[id])
-	//启用RPC,注册raft
-	go rpcRegister(raft)
-	//开启心跳检测
-	go raft.heartbeat()
-	//开启一个Http监听
-	if id == "A" {
-		go raft.httpListen()
+	if nodeID == "" {
+		nodeID = raftAddr
 	}
 
-Circle:
-	//开启选举
-	go func() {
-		for {
-			//成为候选人节点
-			if raft.becomeCandidate() {
-				//成为后选人节点后 向其他节点要选票来进行选举
-				if raft.election() {
-					break
-				} else {
-					continue
-				}
-			} else {
-				break
-			}
-		}
-	}()
+	// Ensure Raft storage exists.
+	raftDir := flag.Arg(0)
+	if raftDir == "" {
+		log.Fatalln("No Raft storage directory specified")
+	}
+	if err := os.MkdirAll(raftDir, 0700); err != nil {
+		log.Fatalf("failed to create path for Raft storage: %s", err.Error())
+	}
 
-	//进行心跳检测
-	for {
-		//0.5秒检测一次
-		time.Sleep(time.Millisecond * 5000)
-		if raft.lastHeartBeartTime != 0 && (millisecond()-raft.lastHeartBeartTime) > int64(raft.timeout*1000) {
-			fmt.Printf("心跳检测超时，已超过%d秒\n", raft.timeout)
-			fmt.Println("即将重新开启选举")
-			raft.reDefault()
-			raft.setCurrentLeader("-1")
-			raft.lastHeartBeartTime = 0
-			goto Circle
+	s := store.New()
+	s.RaftDir = raftDir
+	s.RaftBind = raftAddr
+	if err := s.Open(joinAddr == "", nodeID); err != nil {
+		log.Fatalf("failed to open store: %s", err.Error())
+	}
+
+	h := httpd.New(httpAddr, s)
+	if err := h.Start(); err != nil {
+		log.Fatalf("failed to start HTTP service: %s", err.Error())
+	}
+
+	// If join was specified, make the join request.
+	if joinAddr != "" {
+		if err := join(joinAddr, raftAddr, nodeID); err != nil {
+			log.Fatalf("failed to join node at %s: %s", joinAddr, err.Error())
 		}
 	}
+
+	// We're up and running!
+	log.Printf("hraftd started successfully, listening on http://%s", httpAddr)
+
+	terminate := make(chan os.Signal, 1)
+	signal.Notify(terminate, os.Interrupt)
+	<-terminate
+	log.Println("hraftd exiting")
+}
+
+func join(joinAddr, raftAddr, nodeID string) error {
+	b, err := json.Marshal(map[string]string{"addr": raftAddr, "id": nodeID})
+	if err != nil {
+		return err
+	}
+	resp, err := http.Post(fmt.Sprintf("http://%s/join", joinAddr), "application-type/json", bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return nil
 }
